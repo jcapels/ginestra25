@@ -8,7 +8,7 @@ from utils.earlystop import EarlyStopping
 from utils.utils import initialize_experiment, final_stats
 from utils.epoch_functions import training_epoch, evaluation_epoch
 
-from config import USE_FINGERPRINT, GRID_N_EPOCHS, N_RUNS, LABELS_CODES, TARGET_TYPE, BASEDIR, PARAM_GRID, DATASET_ID, EARLY_PATIENCE, EARLY_MIN_DELTA, USE_MULTILABEL, DEVICE as device
+from config import USE_FINGERPRINT, GRID_N_EPOCHS, N_RUNS, LABELS_CODES, TARGET_TYPE, BASEDIR, DATASET_ID, EARLY_PATIENCE, EARLY_MIN_DELTA, USE_MULTILABEL, DEVICE as device
 
 from models.GIN_parametrized import *
 
@@ -113,7 +113,8 @@ if __name__ == "__main__":
 
     # Esempio di grid search manuale
     from itertools import product
-    param_grid = PARAM_GRID
+    from config import PARAM_GRID_GRAPH
+    param_grid = PARAM_GRID_GRAPH
     keys, values = zip(*param_grid.items())
     configs = [dict(zip(keys, v)) for v in product(*values)]
     n_config = len(configs)

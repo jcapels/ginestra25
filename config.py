@@ -21,12 +21,14 @@ DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 ## === TRAINING EXPERIMENTAL PARAMETERS === ##
 
 GRID_N_EPOCHS = 500    # Number of epochs for grid search
-PARAM_GRID = {
+PARAM_GRID_GRAPH =  {
     'dim_h': [512], 
     'drop_rate': [0.3],
     'learning_rate': [1e-4],
     'l2_rate': [1e-5], 
     'n_heads': [4],
+}
+PARAM_GRID_MLP =  {
     'unit1': [3072, 4608],
     'unit2': [2304, 1536],
     'unit3': [1152, 768],
