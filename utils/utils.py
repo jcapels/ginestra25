@@ -1,7 +1,7 @@
 import numpy as np
 from config import DATADIR
 from typing import Union, Literal
-import pickle
+import pickle, shutil
 from utils.fingerprint_handler import calculate_fingerprint
 
 def data_generation(idx, data, 
@@ -391,8 +391,7 @@ def initialize_experiment(
     os.makedirs(os.path.join(EXPERIMENT_FOLDER, "reports"), exist_ok=True)
 
     # Save the configuration file
-    import shutil
-    shutil.copy(__file__, os.path.join(EXPERIMENT_FOLDER, "config_gridsearch.py"))
+    # shutil.copy(__file__, os.path.join(EXPERIMENT_FOLDER, "config_gridsearch.py"))
 
     # Save the models file from the directory
     for model_file in os.listdir(os.path.join(BASEDIR, "models")):

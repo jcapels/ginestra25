@@ -1,4 +1,4 @@
-import torch
+import torch, os
 
 class EarlyStopping:
     def __init__(self, 
@@ -6,7 +6,8 @@ class EarlyStopping:
                  min_delta=0.0, 
                  verbose=False, 
                  path='checkpoint.pt', 
-                 metric_name='val_f1'):
+                 metric_name='val_f1',
+                 **kwargs):
         """
         Args:
             patience (int): quante epoche aspettare senza miglioramento
@@ -33,6 +34,7 @@ class EarlyStopping:
         self.best_score = None
         self.early_stop = False
         self.last_checkpoint_epoch = None
+        self.grid_config = kwargs.get('grid_config', None)
 
     def __call__(self, metric_value, model, curr_epoch):
         score = metric_value
@@ -65,6 +67,13 @@ class EarlyStopping:
         if self.verbose:
             print(f"[EarlyStopping] Saving model to {self.path} ({self.metric_name}: {score:.4f})")
         torch.save(model.state_dict(), self.path)
+        # Save grid configuration if available
+        if self.grid_config is not None:
+            if not os.path.exists(self.path.replace('.pt', '_config.json')):
+                print(f"[EarlyStopping] Saving grid configuration to {self.path.replace('.pt', '_config.json')}")
+                with open(self.path.replace('.pt', '_config.json'), 'w') as f:
+                    import json
+                    json.dump(self.grid_config, f, indent=4)
 
     def load_best(self, model):
         model.load_state_dict(torch.load(self.path))

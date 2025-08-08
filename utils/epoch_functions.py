@@ -8,7 +8,7 @@ from typing import Union, Literal
 from utils.utils import multilabel_classification_report
 import os
 
-def training_epoch(model, dataloader, optimizer, criterion, device):
+def training_epoch(model, dataloader, optimizer, criterion, device, **kwargs):
     """
     Training loop for the model.
     Args:

@@ -3,27 +3,27 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from utils.seed import set_seed
+
 from utils.earlystop import EarlyStopping
 from utils.utils import initialize_experiment, final_stats
 from utils.epoch_functions import training_epoch, evaluation_epoch
 
 from config import USE_FINGERPRINT, GRID_N_EPOCHS, N_RUNS, LABELS_CODES, TARGET_TYPE, BASEDIR, DATASET_ID, EARLY_PATIENCE, EARLY_MIN_DELTA, USE_MULTILABEL, DEVICE as device
 
-from models.GINE_parametrized import *
+from models.GAT import *
 
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning, module="pydantic")
 
 from gridsearch_dataset_builder import prepare_dataloaders
 
-MODEL_NAME = "gine"
+MODEL_NAME = "gat"
 
 train_dataloader, val_dataloader, test_dataloader = prepare_dataloaders(MODEL_NAME)
 
 EXPERIMENT_FOLDER = initialize_experiment(f"{MODEL_NAME}_{DATASET_ID}", TARGET_TYPE, BASEDIR)
 
-def run_experiment(grid_config, train_loader, val_loader, test_loader, num_node_features, edge_dim, num_classes, config_idx, n_config):
+def run_experiment(grid_config, train_loader, val_loader, test_loader, num_node_features, num_classes, config_idx, n_config):
     curr_config_report_file = os.path.join(EXPERIMENT_FOLDER, "reports", f"report_{MODEL_NAME}_{config_idx}.txt")
     grid_statistics = {
         'train_loss': [],
@@ -38,15 +38,15 @@ def run_experiment(grid_config, train_loader, val_loader, test_loader, num_node_
     }
 
     for run in range(N_RUNS):
-        set_seed(run + 42)
-        model = GINE(
+        
+        model = GAT(
             num_node_features=num_node_features,
             dim_h=grid_config['dim_h'],
             num_classes=num_classes,
             drop_rate=grid_config['drop_rate'],
-            edge_dim=edge_dim,
+            n_heads_in=grid_config['n_heads'],
+            n_heads_out=1,
             fingerprint=USE_FINGERPRINT,
-            num_layers=4
         ).to(device)
         # Reset the model weights
         for layer in model.children():
@@ -71,15 +71,16 @@ def run_experiment(grid_config, train_loader, val_loader, test_loader, num_node_
             min_delta=EARLY_MIN_DELTA,
             verbose=True,
             path=os.path.join(EXPERIMENT_FOLDER, "models", f"best_model_config_{config_idx}_run_{run+1}.pt"),
-            metric_name="val_f1"
-        )
+            metric_name="val_f1", 
+            grid_config=grid_config
+            )
 
         for epoch in range(GRID_N_EPOCHS):
             print(f"[CONFIG {config_idx}/{n_config}][{MODEL_NAME.upper()} RUN {run+1}/{N_RUNS}] Epoch {epoch+1}/{GRID_N_EPOCHS}")
             start_time = time.time()
-            train_loss, train_precision, train_recall, train_f1 = training_epoch(model, train_loader, optimizer, criterion, device)
+            train_loss, train_precision, train_recall, train_f1 = training_epoch(model, train_loader, optimizer, criterion, device, experim_folder=EXPERIMENT_FOLDER)
             end_time = time.time()
-            val_loss, val_precision, val_recall, val_f1, topk = evaluation_epoch(model, val_loader, criterion, device)
+            val_loss, val_precision, val_recall, val_f1, topk = evaluation_epoch(model, val_loader, criterion, device, experim_folder=EXPERIMENT_FOLDER)
 
             grid_statistics['train_loss'].append(train_loss)
             grid_statistics['train_precision'].append(train_precision)
@@ -97,8 +98,7 @@ def run_experiment(grid_config, train_loader, val_loader, test_loader, num_node_
                 print(f"Stopped early at epoch {epoch}. Loading best model from {early_stopping.path}")
                 model.load_state_dict(torch.load(early_stopping.path))
                 test_loss, test_precision, test_recall, test_f1, test_topk = evaluation_epoch(model, test_loader, criterion, device, mode="explain_test")
-                final_stats(grid_statistics, config_idx, n_config, early_stopping.last_checkpoint_epoch)
-                break
+        final_stats(grid_statistics, config_idx, n_config, early_stopping.last_checkpoint_epoch)
 
     return grid_statistics
 
@@ -108,7 +108,6 @@ if __name__ == "__main__":
     test_dataloader = test_dataloader
     sample = next(iter(train_dataloader))
     num_node_features = sample.x.size(-1)
-    edge_dim = sample.edge_attr.size(-1) if sample.edge_attr is not None else None
     num_classes = len(LABELS_CODES)
 
     # Esempio di grid search manuale
@@ -121,4 +120,4 @@ if __name__ == "__main__":
 
     for config_idx, grid_config in enumerate(configs, 1):
         print(f"\n=== CONFIG {config_idx}/{n_config} ===")
-        run_experiment(grid_config, train_dataloader, val_dataloader, test_dataloader, num_node_features, edge_dim, num_classes, config_idx, n_config)
+        run_experiment(grid_config, train_dataloader, val_dataloader, test_dataloader, num_node_features, num_classes, config_idx, n_config)

@@ -26,7 +26,7 @@ class GCN(torch.nn.Module):
             self.convs.append(GCNConv(in_dim, out_dim, cached=False))
             self.bns.append(BatchNorm1d(out_dim))
 
-        self.readout_dim += dim_h_last
+        self.readout_dim += dim_h * (num_layers - 1) + dim_h_last
 
         # Classifier
         if classifier_hidden_dims is None:
@@ -53,8 +53,7 @@ class GCN(torch.nn.Module):
             x = F.relu(x)
             xs.append(global_mean_pool(x, batch))
 
-        x = torch.cat(xs + [kwargs["fingerprint"]], dim=1) if "fingerprint" in kwargs and kwargs["fingerprint"] is not None else torch.cat(xs, dim=1)
-        #x = torch.cat(xs, dim=1)
+        x = torch.cat(xs, dim=1)
         x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.classifier(x)
         return x

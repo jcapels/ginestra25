@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from utils.seed import set_seed
+
 from utils.earlystop import EarlyStopping
 from utils.utils import initialize_experiment, final_stats
 from utils.epoch_functions import training_epoch, evaluation_epoch
@@ -38,7 +38,7 @@ def run_experiment(grid_config, train_loader, val_loader, test_loader, num_node_
     }
 
     for run in range(N_RUNS):
-        set_seed(run + 42)
+        
         model = GIN(
             num_node_features=num_node_features,
             dim_h=grid_config['dim_h'],
@@ -71,15 +71,16 @@ def run_experiment(grid_config, train_loader, val_loader, test_loader, num_node_
             min_delta=EARLY_MIN_DELTA,
             verbose=True,
             path=os.path.join(EXPERIMENT_FOLDER, "models", f"best_model_config_{config_idx}_run_{run+1}.pt"),
-            metric_name="val_f1"
-        )
+            metric_name="val_f1", 
+            grid_config=grid_config
+            )
 
         for epoch in range(GRID_N_EPOCHS):
             print(f"[CONFIG {config_idx}/{n_config}][{MODEL_NAME.upper()} RUN {run+1}/{N_RUNS}] Epoch {epoch+1}/{GRID_N_EPOCHS}")
             start_time = time.time()
-            train_loss, train_precision, train_recall, train_f1 = training_epoch(model, train_loader, optimizer, criterion, device)
+            train_loss, train_precision, train_recall, train_f1 = training_epoch(model, train_loader, optimizer, criterion, device, experim_folder=EXPERIMENT_FOLDER)
             end_time = time.time()
-            val_loss, val_precision, val_recall, val_f1, topk = evaluation_epoch(model, val_loader, criterion, device)
+            val_loss, val_precision, val_recall, val_f1, topk = evaluation_epoch(model, val_loader, criterion, device, experim_folder=EXPERIMENT_FOLDER)
 
             grid_statistics['train_loss'].append(train_loss)
             grid_statistics['train_precision'].append(train_precision)

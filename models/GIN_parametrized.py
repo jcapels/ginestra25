@@ -27,7 +27,6 @@ class GIN(torch.nn.Module):
             nn = Sequential(
                 Linear(in_dim, out_dim),
                 GELU(),
-                #ReLU(),
                 Linear(out_dim, out_dim),
             )
             self.convs.append(GINConv(nn))
@@ -58,12 +57,10 @@ class GIN(torch.nn.Module):
         for i in range(self.num_layers):
             x = self.convs[i](x, edge_index)
             x = self.bns[i](x)
-            # x = F.gelu(x)
             x = F.relu(x)
             xs.append(global_add_pool(x, batch))
 
         x = torch.cat(xs, dim=1)
-        # x = torch.cat(xs, dim=1)
         x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.classifier(x)
         return x
