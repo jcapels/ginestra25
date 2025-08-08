@@ -333,8 +333,8 @@ def main(args):
     if args.explain:
         explainer = Explainer(
             model=model,
-            algorithm=GNNExplainer(epochs=50),
-            explanation_type='model',
+            algorithm=GNNExplainer(epochs=10),
+            explanation_type='model',  
             node_mask_type='attributes',
             edge_mask_type='object',
             model_config=ModelConfig(
@@ -381,7 +381,7 @@ if __name__ == "__main__":
         choices=["gcn", "gat", "gin", "gine", "gate", "mlp"], 
         help="Model architecture to use.", default="gin")
     parser.add_argument("--model_path", type=str, required=False, 
-        help="Path to the trained .pt model file.", default="/repo/corradini/ginestra25/experiments/gin_MULTILABEL_BCDEF_pathway_20250808_135754/models/best_model_config_1_run_1.pt")
+        help="Path to the trained .pt model file.", default="/mnt/beegfs/home/giulio/metabolomic/ginestra/experiments/gin_MULTILABEL_BCDEF_class_20250806_215843/models/best_model_config_1_run_1.pt")
     parser.add_argument("--input_smiles", type=str, required=False, 
         help="SMILES string of the molecule to classify (optional - will prompt if not provided).", default="C/C=C(/C)\C(=O)OC1CCN2C1C(=CC2)COC(=O)/C(=C/C)/CO")
     parser.add_argument("--explain", action="store_true", help="If set, generate an explanation for the prediction.", default=True)

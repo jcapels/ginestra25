@@ -11,8 +11,8 @@ if os.path.exists(os.path.join(os.path.dirname(__file__), "models/__pycache__"))
 ## === FILESYSTEM PARAMETERS === ##
 
 # Set the base directory and data directory
-BASEDIR = os.path.abspath(os.path.dirname(__file__))
-DATADIR = os.path.join(BASEDIR, "data/data")
+BASEDIR = "/mnt/beegfs/home/giulio/metabolomic/ginestra"
+DATADIR = os.path.join(BASEDIR, "data")
 
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -47,7 +47,7 @@ N_RUNS = 5  # Number of runs for the model
 # "pathway" = 7 classes
 # "superclass" = 70 classes
 # "class" = 652 classes
-TARGET_TYPE = "pathway"  # Options: "pathway", "superclass", "class"
+TARGET_TYPE = "class"  # Options: "pathway", "superclass", "class"
 
 ## DATASET PARAMETERS
 FORCE_DATASET_GENERATION = False # If True, force the generation of the dataset

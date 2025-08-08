@@ -116,7 +116,8 @@ def draw_molecule_with_explanation(
                     bond_colors[bond.GetIdx()] = rgba
 
     # Disegna molecola
-    mol_copy = Chem.Mol(mol)
+    #mol_copy = Chem.Mol(mol)
+    mol_copy = Chem.MolFromSmiles(smile)
     Chem.rdDepictor.Compute2DCoords(mol_copy)
     drawer = rdMolDraw2D.MolDraw2DCairo(1200, 1200)
     drawer.drawOptions().addAtomIndices = True
@@ -135,11 +136,11 @@ def draw_molecule_with_explanation(
     fig, ax = plt.subplots(figsize=(0.35, 4), dpi=dpi)
     norm = plt.Normalize(vmin=0.0, vmax=1.0)
     smap = cm.ScalarMappable(norm=norm, cmap=cmap)
-    cb = plt.colorbar(smap, cax=ax, ticks=[0.0, 0.25, 0.5, 0.75, 1.0])
+    cb = plt.colorbar(smap, cax=ax, ticks=[0.0, 0.25, 0.5, 0.75, 1.0], aspect=10) #cax=ax
     cb.ax.tick_params(labelsize=7, length=3, direction='in', pad=2)
     cb.set_label(f"Importance (Class {predicted_class})", fontsize=8, labelpad=5)
 
-    fig.subplots_adjust(left=0.2, right=0.8)
+    fig.subplots_adjust(left=0.2, right=0.5)
     fig.canvas.draw()
     colorbar_img = Image.frombytes("RGB", fig.canvas.get_width_height(), fig.canvas.tostring_rgb())
     plt.close(fig)
@@ -152,19 +153,19 @@ def draw_molecule_with_explanation(
     result.paste(colorbar_img, (mol_img.width, 0))
     
     plt.figure(figsize=(12, 8))
-    plt.subplot(1, 2, 1)
-    if smile:
-        mol_from_smile = Chem.MolFromSmiles(smile)
-        if mol_from_smile:
-            Chem.rdDepictor.Compute2DCoords(mol_from_smile)
-            img_smile = Chem.Draw.MolToImage(mol_from_smile, size=(400, 400))
-            plt.imshow(img_smile)
-    plt.axis('off')
-    plt.subplot(1, 2, 2)
+    # plt.subplot(1, 2, 1)
+    # if smile:
+    #     mol_from_smile = Chem.MolFromSmiles(smile)
+    #     if mol_from_smile:
+    #         Chem.rdDepictor.Compute2DCoords(mol_from_smile)
+    #         img_smile = Chem.Draw.MolToImage(mol_from_smile, size=(400, 400))
+    #         plt.imshow(img_smile)
+    # plt.axis('off')
+    # plt.subplot(1, 2, 2)
     plt.imshow(result)
     plt.axis('off')
     plt.show()
-    plt.savefig(save_path.replace('.png', '_full.png'), dpi=dpi, bbox_inches='tight')
+    plt.savefig(save_path.replace('.png', '_full.png'), dpi=dpi)  # bbox_inches='tight'
     print(f"✅ Explained molecule saved: {save_path.replace('.png', '_full.png')}")
     
     return result
