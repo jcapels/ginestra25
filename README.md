@@ -27,7 +27,7 @@ If you use this code or the ideas presented in our work, please cite our paper:
 
 ---
 
-## Overview
+## Abstract
 
 Natural Products (NPs) represent a rich source of bioactive compounds with high structural diversity and therapeutic potential.
 Automatic classification of NPs is critical to ensure safety, support regulatory compliance, inform product usage, and enable the discovery of new pharmacologically relevant molecules. 
@@ -37,6 +37,12 @@ We evaluate multiple GNN architectures on curated NP dataset and assess their ab
 These findings highlight the potential of GNNs as effective tools for NP classification. 
 By leveraging graph-based representations, GNNs offer a scalable, data-driven approach that better reflects the structural and functional complexity of natural products. 
 This work provides methodological guidance and encourages broader adoption of deep learning in natural product research and drug discovery.
+
+<!-- Add image to showcase the GINESTRA project. Image is in .readme_images/pileline2.png -->
+![GINESTRA Pipeline](.readme/pipeline2.png)
+<!-- Caption of the image -->
+<p align="center"><i>Overview of the graph-based classification pipeline. Starting from the SMILES string representation, each molecule is converted into its corresponding 2D structure and then into a graph, where atoms are nodes and bonds are edges. This graph is processed by a Graph Neural Network (e.g., GCN, GAT or GIN), which learns a neural fingerprint encoding structural information. The fingerprint is then passed to a classifier that outputs graph-level predictions across three classification levels (e.g., pathway, superclass, and class), denoted as C_0, C_1, ..., C_n.</i></p>
+---
 
 ## Models Implemented
 

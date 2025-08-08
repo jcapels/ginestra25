@@ -1,0 +1,6 @@
+experiments*
+data/data/test_*
+data/data/train_*
+data/data/val_*
+*/__pycache__
+__pycache__
