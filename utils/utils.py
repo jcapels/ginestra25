@@ -405,7 +405,7 @@ def initialize_experiment(
             
     # Copy all the py files in the folder 
     for file in os.listdir(BASEDIR):
-        if file.endswith(".py") and file != "config.py":
+        if file.endswith(".py"):
             shutil.copy(os.path.join(BASEDIR, file), os.path.join(EXPERIMENT_FOLDER, file))
             
     return EXPERIMENT_FOLDER

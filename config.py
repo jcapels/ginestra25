@@ -27,6 +27,7 @@ PARAM_GRID_GRAPH =  {
     'learning_rate': [1e-4],
     'l2_rate': [1e-5], 
     'n_heads': [4],
+    'num_layers': [4]
 }
 PARAM_GRID_MLP =  {
     'unit1': [3072, 4608],

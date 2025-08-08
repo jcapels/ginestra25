@@ -10,7 +10,7 @@ from utils.epoch_functions import training_epoch, evaluation_epoch
 
 from config import USE_FINGERPRINT, GRID_N_EPOCHS, N_RUNS, LABELS_CODES, TARGET_TYPE, BASEDIR, DATASET_ID, EARLY_PATIENCE, EARLY_MIN_DELTA, USE_MULTILABEL, DEVICE as device
 
-from models.GINE_parametrized import *
+from models.GINE import *
 
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning, module="pydantic")
