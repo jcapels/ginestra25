@@ -2,7 +2,7 @@ import torch, numpy as np
 import torch.nn.functional as F
 from sklearn.metrics import precision_score, recall_score, f1_score
 from utils.topk import top_k_accuracy, top_k_coverage
-from config import USE_FINGERPRINT, ATOMS_LIST as permitted_atoms, TARGETS_LIST
+from config import USE_FINGERPRINT, ATOMS_LIST as permitted_atoms
 from utils.explainability import explain_all_molecules_in_batches
 from typing import Union, Literal
 from utils.utils import multilabel_classification_report
@@ -56,11 +56,11 @@ def training_epoch(model, dataloader, optimizer, criterion, device, **kwargs):
     print(f"TRAINING REPORT")
     print("===============================================================================")
     # Compute the classification report
-    print(multilabel_classification_report(
-        y_true=np.array(all_targets),
-        y_pred=np.array((F.sigmoid(torch.Tensor(np.array(all_preds))) > 0.5)),
-        target_names=TARGETS_LIST,
-    ))
+    # print(multilabel_classification_report(
+    #     y_true=np.array(all_targets),
+    #     y_pred=np.array((F.sigmoid(torch.Tensor(np.array(all_preds))) > 0.5)),
+    #     target_names=TARGETS_LIST,
+    # ))
     avg_loss = total_loss / len(dataloader)
     precision = precision_score(all_targets, (F.sigmoid(torch.Tensor(np.array(all_preds)))>0.5), average='macro', zero_division=0)
     recall = recall_score(all_targets, (F.sigmoid(torch.Tensor(np.array(all_preds)))>0.5), average='macro', zero_division=0)
@@ -92,27 +92,27 @@ def evaluation_epoch(model, dataloader, criterion, device, mode:Union[Literal["e
     else:
         suffix = None    
         
-    if "experim_folder" in kwargs:
-        experim_folder = kwargs["experim_folder"]
-        output_dir = os.path.join(experim_folder, "explainability", f"{suffix}_explanations")
-        os.makedirs(output_dir, exist_ok=True)
-    else:
-        experim_folder = os.path.join(os.getcwd(), "explainability")
-        output_dir = os.path.join(experim_folder, f"{suffix}_explanations")
-        os.makedirs(output_dir, exist_ok=True)
+    # if "experim_folder" in kwargs:
+    #     experim_folder = kwargs["experim_folder"]
+    #     output_dir = os.path.join(experim_folder, "explainability", f"{suffix}_explanations")
+    #     os.makedirs(output_dir, exist_ok=True)
+    # else:
+    #     experim_folder = os.path.join(os.getcwd(), "explainability")
+    #     output_dir = os.path.join(experim_folder, f"{suffix}_explanations")
+    #     os.makedirs(output_dir, exist_ok=True)
         
-    if suffix is not None:
-        from config import DATADIR, TARGET_TYPE
-        # Esegui analisi completa
-        explain_all_molecules_in_batches(
-            model=model,
-            test_dataloader=dataloader,
-            device=device,
-            permitted_atoms=permitted_atoms,
-            max_molecules=10,
-            smiles_file=f'{DATADIR}/{suffix}_smiles_{TARGET_TYPE}.csv',
-            output_dir=output_dir,
-        )
+    # if suffix is not None:
+    #     from config import DATADIR, TARGET_TYPE
+    #     # Esegui analisi completa
+    #     explain_all_molecules_in_batches(
+    #         model=model,
+    #         test_dataloader=dataloader,
+    #         device=device,
+    #         permitted_atoms=permitted_atoms,
+    #         max_molecules=10,
+    #         smiles_file=f'{DATADIR}/{suffix}_smiles_{TARGET_TYPE}.csv',
+    #         output_dir=output_dir,
+    #     )
     total_loss = 0.0
     all_preds, all_targets = [], []
     topk = {}
@@ -142,20 +142,33 @@ def evaluation_epoch(model, dataloader, criterion, device, mode:Union[Literal["e
         print(f"EVALUATION REPORT")
         print("===============================================================================")
         # Compute the classification report
-        print(multilabel_classification_report(
-            y_true=np.array(all_targets),
-            y_pred=np.array((F.sigmoid(torch.Tensor(np.array(all_preds))) > 0.5)),
-            target_names=TARGETS_LIST,
-        ))
-        avg_loss = total_loss / len(dataloader)
-        precision = precision_score(all_targets, (F.sigmoid(torch.Tensor(np.array(all_preds))) > 0.5), average='macro', zero_division=0)
-        recall = recall_score(all_targets, (F.sigmoid(torch.Tensor(np.array(all_preds))) > 0.5), average='macro', zero_division=0)
-        f1 = f1_score(all_targets, (F.sigmoid(torch.Tensor(np.array(all_preds))) > 0.5), average='macro', zero_division=0)
-        topk['1'] = top_k_accuracy(out, y, k=1)
-        topk['3'] = top_k_accuracy(out, y, k=3)
-        topk['5'] = top_k_accuracy(out, y, k=5)
-        topk['1_coverage'] = top_k_coverage(out, y, k=1)
-        topk['3_coverage'] = top_k_coverage(out, y, k=3)
-        topk['5_coverage'] = top_k_coverage(out, y, k=5)
+        # print(multilabel_classification_report(
+        #     y_true=np.array(all_targets),
+        #     y_pred=np.array((F.sigmoid(torch.Tensor(np.array(all_preds))) > 0.5)),
+        #     target_names=TARGETS_LIST,
+        # ))
 
-    return avg_loss, precision, recall, f1, topk
+        all_targets = np.array(all_targets)
+        all_preds = np.array(all_preds)
+        avg_loss = total_loss / len(dataloader)
+        all_pred = (F.sigmoid(torch.Tensor(np.array(all_preds))) > 0.5)
+        precision = precision_score(all_targets, all_pred, average='macro', zero_division=0)
+        recall = recall_score(all_targets, all_pred, average='macro', zero_division=0)
+        f1 = f1_score(all_targets, all_pred, average='macro', zero_division=0)
+        precision_pathway = precision_score(all_targets[:, :7], all_pred[:, :7], average='macro', zero_division=0)
+        recall_pathway = recall_score(all_targets[:, :7], all_pred[:, :7], average='macro', zero_division=0)
+        f1_pathway = f1_score(all_targets[:, :7], all_pred[:, :7], average='macro', zero_division=0)
+        precision_superpathway = precision_score(all_targets[:, 7:77], all_pred[:, 7:77], average='macro', zero_division=0)
+        recall_superpathway = recall_score(all_targets[:, 7:77], all_pred[:, 7:77], average='macro', zero_division=0)
+        f1_superpathway = f1_score(all_targets[:, 7:77], all_pred[:, 7:77], average='macro', zero_division=0)
+        precision_class = precision_score(all_targets[:, 77:], all_pred[:, 77:], average='macro', zero_division=0)
+        recall_class = recall_score(all_targets[:, 77:], all_pred[:, 77:], average='macro', zero_division=0)
+        f1_class = f1_score(all_targets[:, 77:], all_pred[:, 77:], average='macro', zero_division=0)
+        # topk['1'] = top_k_accuracy(out, y, k=1)
+        # topk['3'] = top_k_accuracy(out, y, k=3)
+        # topk['5'] = top_k_accuracy(out, y, k=5)
+        # topk['1_coverage'] = top_k_coverage(out, y, k=1)
+        # topk['3_coverage'] = top_k_coverage(out, y, k=3)
+        # topk['5_coverage'] = top_k_coverage(out, y, k=5)
+
+    return avg_loss, precision, recall, f1, precision_pathway, recall_pathway, f1_pathway, precision_superpathway, recall_superpathway, f1_superpathway, precision_class, recall_class, f1_class

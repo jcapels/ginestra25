@@ -11,8 +11,8 @@ if os.path.exists(os.path.join(os.path.dirname(__file__), "models/__pycache__"))
 ## === FILESYSTEM PARAMETERS === ##
 
 # Set the base directory and data directory
-BASEDIR = "/mnt/beegfs/home/giulio/metabolomic/ginestra"
-DATADIR = os.path.join(BASEDIR, "data")
+BASEDIR = "/home/jcapela/ginestra25/"
+DATADIR = os.path.join(BASEDIR, "data", "data_to_evaluate")
 
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -50,7 +50,7 @@ N_RUNS = 5  # Number of runs for the model
 TARGET_TYPE = "class"  # Options: "pathway", "superclass", "class"
 
 ## DATASET PARAMETERS
-FORCE_DATASET_GENERATION = False # If True, force the generation of the dataset
+FORCE_DATASET_GENERATION = True # If True, force the generation of the dataset
 N_SAMPLES = None  # Number of samples to pick from the training set. If set to None, all samples are used
 BATCH_SIZE = 32  # Batch size
 RANDOMIZE_SAMPLES = True # Randomize the order of the samples in the dataset
@@ -109,20 +109,20 @@ EARLY_MIN_DELTA = 0.0001
 ## === EXPERIMENT PARAMETERS === ##
 PATHWAYS, SUPERCLASSES, CLASSES = None, None, None
 # Build dictionaries of classes, superclasses and pathways based on the target type
-if TARGET_TYPE == "pathway":
-    with open(f'{DATADIR}/char2idx_path_V1.pkl','rb') as f:
-        class_  = pickle.load(f)
-elif TARGET_TYPE == "superclass" or TARGET_TYPE == "super_class":
-    with open(f'{DATADIR}/char2idx_super_V1.pkl','rb') as f:
-        class_  = pickle.load(f)
-elif TARGET_TYPE == "class":
-    with open(f'{DATADIR}/char2idx_class_V1.pkl','rb') as f:
-        class_  = pickle.load(f)
-else:
-    raise ValueError("TARGET_TYPE must be one of 'pathway', 'superclass' or 'class'")
+# if TARGET_TYPE == "pathway":
+#     with open(f'{DATADIR}/char2idx_path_V1.pkl','rb') as f:
+#         class_  = pickle.load(f)
+# elif TARGET_TYPE == "superclass" or TARGET_TYPE == "super_class":
+#     with open(f'{DATADIR}/char2idx_super_V1.pkl','rb') as f:
+#         class_  = pickle.load(f)
+# elif TARGET_TYPE == "class":
+#     with open(f'{DATADIR}/char2idx_class_V1.pkl','rb') as f:
+#         class_  = pickle.load(f)
+# else:
+#     raise ValueError("TARGET_TYPE must be one of 'pathway', 'superclass' or 'class'")
 
-PATHWAYS = {k: v for k, v in class_.items()}
-TARGETS_LIST = [k for k, v in class_.items()]
+# PATHWAYS = {k: v for k, v in class_.items()}
+# TARGETS_LIST = [k for k, v in class_.items()]
 
-# LABELS_CODES in one-hot encoding
-LABELS_CODES = {i: np.array([1 if i == j else 0 for j in range(len(class_))]) for i in range(len(class_))}
+# # LABELS_CODES in one-hot encoding
+# LABELS_CODES = {i: np.array([1 if i == j else 0 for j in range(len(class_))]) for i in range(len(class_))}

@@ -197,11 +197,11 @@ def create_pytorch_geometric_graph_data_list_from_smiles_and_labels(df,
     # Itera sul dataframe
     for _, molecule in tqdm(df.iterrows()):
         smiles = molecule['SMILES']
-        y = molecule[target]
-        try:
-            fingerprint = molecule['Fingerprint']
-        except KeyError:
-            fingerprint = molecule['fingerprint']
+        y = molecule[2:]
+        # try:
+        #     fingerprint = molecule['Fingerprint']
+        # except KeyError:
+        #     fingerprint = molecule['fingerprint']
         
         # Convertire SMILES in oggetto RDKit mol
         mol = Chem.MolFromSmiles(smiles)
@@ -272,6 +272,7 @@ def create_pytorch_geometric_graph_data_list_from_smiles_and_labels(df,
         EF = torch.Tensor(EF)
         # EF = EF.T                           # Edge feature matrix with shape (num_edges x num_edge_features)
 
+        y = np.array(y, dtype=np.int16)
         # Convertire le etichette in tensori
         if isinstance(y, int):
             y_tensor = torch.Tensor([y])
@@ -299,9 +300,9 @@ def create_pytorch_geometric_graph_data_list_from_smiles_and_labels(df,
     
         from config import USE_FINGERPRINT
         # Se USE_FINGERPRINT è True, aggiungi fingerprint
-        if USE_FINGERPRINT:
-            fingerprint_tensor = torch.tensor(fingerprint, dtype=torch.float)
-            data_args["fingerprint_tensor"] = fingerprint_tensor
+        # if USE_FINGERPRINT:
+            # fingerprint_tensor = torch.tensor(fingerprint, dtype=torch.float)
+            # data_args["fingerprint_tensor"] = fingerprint_tensor
 
         # Creare l'oggetto Data dinamicamente
         data = Data(**data_args)
@@ -337,7 +338,7 @@ def save_pickle(data, filepath):
         pickle.dump(data, f)
 
 
-def prepare_dataloaders(model_name: str, batch_size: int=32):
+def prepare_dataloaders(model_name: str, batch_size: int=32, validation_set=True, seed=42):
     
     import config
     if config.N_SAMPLES is not None:
@@ -364,15 +365,16 @@ def prepare_dataloaders(model_name: str, batch_size: int=32):
         if "gin" in model_name or "gine" in model_name or "gat" in model_name or "gate" in model_name or "gcn" in model_name:
             try:
                 gnn_train_dataloader_object = load_pickle(f'{DATADIR}/train_geodataloader_{DATASET_ID}_{TARGET_TYPE}{suffix}.pkl')
-                gnn_val_dataloader_object = load_pickle(f'{DATADIR}/val_geodataloader_{DATASET_ID}_{TARGET_TYPE}{suffix}.pkl')
+                if validation_set:
+                    gnn_val_dataloader_object = load_pickle(f'{DATADIR}/val_geodataloader_{DATASET_ID}_{TARGET_TYPE}{suffix}.pkl')
+                    gnn_val_dataloader = gnn_val_dataloader_object["dataloader"]
+                    val_dataset_info = gnn_val_dataloader_object["dataset_info"]
                 gnn_test_dataloader_object = load_pickle(f'{DATADIR}/test_geodataloader_{DATASET_ID}_{TARGET_TYPE}{suffix}.pkl')
                 # Unpack the dataloader
                 gnn_train_dataloader = gnn_train_dataloader_object["dataloader"]
-                gnn_val_dataloader = gnn_val_dataloader_object["dataloader"]
                 gnn_test_dataloader = gnn_test_dataloader_object["dataloader"]
                 # Unpack the dataset info
                 train_dataset_info = gnn_train_dataloader_object["dataset_info"]
-                val_dataset_info = gnn_val_dataloader_object["dataset_info"]
                 test_dataset_info = gnn_test_dataloader_object["dataset_info"]
                 # Print dataset info
                 print(f"\n=== Dataset Info ===")
@@ -386,35 +388,41 @@ def prepare_dataloaders(model_name: str, batch_size: int=32):
                 config.FORCE_DATASET_GENERATION = True
             
     if config.FORCE_DATASET_GENERATION:
-        print("Generating new dataset.")
-        with open(f'{DATADIR}/char2idx_class_V1.pkl','rb') as f:
-            class_  = pickle.load(f)
-        with open(f'{DATADIR}/char2idx_super_V1.pkl','rb') as f:
-            superclass_  = pickle.load(f)
-        with open(f'{DATADIR}/char2idx_path_V1.pkl','rb') as f:
-            pathway_  = pickle.load(f)
-        with open(f'{DATADIR}/datset_class_all_V1.pkl','rb') as r:
-            dataset = pickle.load(r)
-            dataset = {k: {k2.replace("_", ""): v2 for k2, v2 in v.items()} for k, v in dataset.items()}
+        # print("Generating new dataset.")
+        # with open(f'{DATADIR}/char2idx_class_V1.pkl','rb') as f:
+        #     class_  = pickle.load(f)
+        # with open(f'{DATADIR}/char2idx_super_V1.pkl','rb') as f:
+        #     superclass_  = pickle.load(f)
+        # with open(f'{DATADIR}/char2idx_path_V1.pkl','rb') as f:
+        #     pathway_  = pickle.load(f)
+        # with open(f'{DATADIR}/datset_class_all_V1.pkl','rb') as r:
+        #     dataset = pickle.load(r)
+        #     dataset = {k: {k2.replace("_", ""): v2 for k2, v2 in v.items()} for k, v in dataset.items()}
         
         if not USE_MULTILABEL:
             dataset = {k: v for k, v in dataset.items() if np.sum(v[TARGET_TYPE.capitalize()]) == 1}
-        smiles_df = [dataset[i]['SMILES'] for i in dataset.keys()]
-        fingerprint_list = [np.concatenate(calculate_fingerprint(i, 2), axis=1) for i in tqdm(smiles_df)]
-        labels_list = [dataset[i][TARGET_TYPE.capitalize()] for i in dataset.keys()]
+        # smiles_df = [dataset[i]['SMILES'] for i in dataset.keys()]
+        # fingerprint_list = [np.concatenate(calculate_fingerprint(i, 2), axis=1) for i in tqdm(smiles_df)]
+        # labels_list = [dataset[i][TARGET_TYPE.capitalize()] for i in dataset.keys()]
 
-        df = pd.DataFrame({'SMILES': smiles_df, 'fingerprint': fingerprint_list, TARGET_TYPE.capitalize(): labels_list})
-        df = df.sample(frac=1, random_state=42).reset_index(drop=True)
-        train_indices, val_indices, test_indices, _, _, _ = dataset_split(np.array(labels_list))
+        # df = pd.DataFrame({'SMILES': smiles_df, 'fingerprint': fingerprint_list, TARGET_TYPE.capitalize(): labels_list})
+        # df = df.sample(frac=1, random_state=42).reset_index(drop=True)
+        # train_indices, val_indices, test_indices, _, _, _ = dataset_split(np.array(labels_list))
 
-        train_df = df.iloc[train_indices]
-        val_df = df.iloc[val_indices]
-        test_df = df.iloc[test_indices]
+        # train_df = df.iloc[train_indices]
+        # val_df = df.iloc[val_indices]
+        # test_df = df.iloc[test_indices]
         # Save the SMILES from the train, val, and test sets
-        train_df.to_csv(f'{DATADIR}/train_smiles_{TARGET_TYPE}.csv', index=False)
-        val_df.to_csv(f'{DATADIR}/val_smiles_{TARGET_TYPE}.csv', index=False)
-        test_df.to_csv(f'{DATADIR}/test_smiles_{TARGET_TYPE}.csv', index=False)
+        # train_df.to_csv(f'{DATADIR}/train_smiles_{TARGET_TYPE}.csv', index=False)
+        # val_df.to_csv(f'{DATADIR}/val_smiles_{TARGET_TYPE}.csv', index=False)
+        # test_df.to_csv(f'{DATADIR}/test_smiles_{TARGET_TYPE}.csv', index=False)
         print(f"SMILES of training, validation, and test sets saved to {DATADIR}.")
+
+        train_df = pd.read_csv(f'{DATADIR}/train_dataset.csv')
+        train_df = train_df.sample(frac=1, random_state=seed).reset_index(drop=True)
+        if validation_set:
+            val_df = pd.read_csv(f'{DATADIR}/validation_dataset.csv')
+        test_df = pd.read_csv(f'{DATADIR}/test_dataset.csv')
 
         if "mlp" in model_name:
             train_dataset = CustomDataset(train_df)
@@ -431,12 +439,15 @@ def prepare_dataloaders(model_name: str, batch_size: int=32):
 
         if "gin" in model_name or "gine" in model_name or "gat" in model_name or "gate" in model_name or "gcn" in model_name:
             train_datalist, train_dataset_info = create_pytorch_geometric_graph_data_list_from_smiles_and_labels(train_df, target=TARGET_TYPE.capitalize())
-            val_datalist, val_dataset_info = create_pytorch_geometric_graph_data_list_from_smiles_and_labels(val_df, target=TARGET_TYPE.capitalize())
+            if validation_set:
+                val_datalist, val_dataset_info = create_pytorch_geometric_graph_data_list_from_smiles_and_labels(val_df, target=TARGET_TYPE.capitalize())
+                gnn_val_dataloader = GeoDataLoader(val_datalist, batch_size=BATCH_SIZE, drop_last=True, shuffle=False)
+
             test_datalist, test_dataset_info = create_pytorch_geometric_graph_data_list_from_smiles_and_labels(test_df, target=TARGET_TYPE.capitalize())
             
             # Save dataset to a pickle file
             gnn_train_dataloader = GeoDataLoader(train_datalist, batch_size=BATCH_SIZE, drop_last=True, shuffle=True)
-            gnn_val_dataloader = GeoDataLoader(val_datalist, batch_size=BATCH_SIZE, drop_last=True, shuffle=False)
+           
             gnn_test_dataloader = GeoDataLoader(test_datalist, batch_size=BATCH_SIZE, drop_last=True, shuffle=False)
 
             # Save dataset and infos to the same pickle file as a dictionary
@@ -447,11 +458,12 @@ def prepare_dataloaders(model_name: str, batch_size: int=32):
                 }, f)
                 
             # Save dataset and infos to the same pickle file as a dictionary
-            with open(f'{DATADIR}/val_geodataloader_{DATASET_ID}_{TARGET_TYPE}{suffix}.pkl', 'wb') as f:
-                pickle.dump({
-                    "dataloader": gnn_val_dataloader,
-                    "dataset_info": val_dataset_info
-                }, f)
+            if validation_set:
+                with open(f'{DATADIR}/val_geodataloader_{DATASET_ID}_{TARGET_TYPE}{suffix}.pkl', 'wb') as f:
+                    pickle.dump({
+                        "dataloader": gnn_val_dataloader,
+                        "dataset_info": val_dataset_info
+                    }, f)
 
             with open(f'{DATADIR}/test_geodataloader_{DATASET_ID}_{TARGET_TYPE}{suffix}.pkl', 'wb') as f:
                 pickle.dump({
@@ -463,4 +475,7 @@ def prepare_dataloaders(model_name: str, batch_size: int=32):
     if "mlp" in model_name:
         return mlp_train_dataloader, mlp_val_dataloader, mlp_test_dataloader
     if "gin" in model_name or "gine" in model_name or "gat" in model_name or "gate" in model_name or "gcn" in model_name:
-        return gnn_train_dataloader, gnn_val_dataloader, gnn_test_dataloader
+        if validation_set:
+            return gnn_train_dataloader, gnn_val_dataloader, gnn_test_dataloader
+        else:
+            return gnn_train_dataloader, gnn_test_dataloader
